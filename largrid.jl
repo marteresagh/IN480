@@ -2,6 +2,7 @@
 
 using IterTools
 using DataStructures
+using Combinatorics
 
 function larSplit(dom)
     function larSplit1(n)
@@ -15,11 +16,11 @@ end
         
         
 function grid_0(n)
-    return [[i] for i in range(1,n+1)] 
+    return hcat([[i] for i in range(0,n+1)]...)
 end
 
 function grid_1(n)
-    return [[i,i+1] for i in range(1,n)]
+    return hcat([[i,i+1] for i in range(0,n)]...)
 end
 
 function larGrid(n)
@@ -31,6 +32,25 @@ function larGrid(n)
         end
     end
     return larGrid1
+end
+
+function grid0(n)
+    return [[i] for i in range(1,n+1)] 
+end
+
+function grid1(n)
+    return [[i,i+1] for i in range(1,n)]
+end
+
+function Cell(n)
+    function Cell1(d)
+        if d==0 
+            return grid0(n)
+        elseif d==1 
+            return grid1(n) 
+        end
+    end
+    return Cell1
 end
 
 function larCuboidsFacets(V,cells)
@@ -49,18 +69,13 @@ function larCuboidsFacets(V,cells)
     return V,sort(facets, by = x -> x[1])
 end
 
-function larSimplexFacets(simplices)#[[,],[,]]
-    out=[]
-    d=size(simplices[1],1)
-    for simplex in simplices
-        sim=vcat(simplex,simplex)
-        for k = d-1
-            append!(out,collect([sim[i:i+k-1] for i in range(1,d)]))
-        end
-    end
-    facets0=collect([sort(out[i]) for i in range(1,length(out))])
-    facets=unique(facets0)
-    return sort(facets, by = x -> x[1])
+function larSimplexFacets(simplices)
+	out = Array{Int32,1}[]
+		d = length(simplices[1])
+		for simplex in simplices
+			append!(out,collect(combinations(simplex,d-1)))
+		end
+	return sort!(unique(out), lt=lexless)
 end
 
 function larSimplicialStack(simplices)
