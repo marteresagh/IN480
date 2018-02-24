@@ -9,7 +9,7 @@ VIEW(square)
 VIEW(cube)
 
 #view di celle esplose
-mod_2 = larSplit(3)(2), Cell(2)(1)
+mod_2 = larSplit(3)(3), Cell(3)(1)
 squares = larModelProduct(mod_2,mod_2)
 VIEW_EXPLODE(squares)
 cubes = larModelProduct(squares,mod_2)
@@ -50,7 +50,3 @@ VIEW_EXPLODE(cell)
 #numerazione elementi
 edge1=CUBE[1],gridSkeletons([1,1,1])
 VIEW_NUMBERED(edge1)
-
-
-
-!!!!!!aggiungi test che larGridSkeletons e gridSkeleton devono avere degli output comuni
