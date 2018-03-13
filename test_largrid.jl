@@ -36,29 +36,6 @@ using Base.Test
 		end
 	end 
 
-	@testset "Cell Tests" begin
-		@testset "grid0" begin
-			@test grid0(1) == [[1],[2]]
-			@test grid0(2) == [[1],[2],[3]]
-			@test grid0(3) == [[1],[2],[3],[4]]
-		end
-   
-		@testset "grid1" begin
-			@test repr(grid1(1)) == "Array{Int32,1}[[1, 2]]"
-			@test grid1(2) == [[1,2], [2,3]]
-			@test grid1(3) == [[1, 2], [2, 3],[3, 4]]
-		end
-   
-		@testset "Cell" begin
-			@test repr(Cell(1)(0)) == "Array{Int32,1}[[1], [2]]"
-			@test repr(Cell(1)(1)) == "Array{Int32,1}[[1, 2]]"
-			@test Cell(2)(0) == [[1],[2],[3]]
-			@test Cell(2)(1) == [[1,2],[2,3]]
-			@test Cell(3)(0) == [[1],[2],[3],[4]]
-			@test Cell(3)(1) == [[1,2],[2,3],[3,4]]
-		end
-	end
-
 	@testset "Index2addr Tests" begin
 		@testset "shape 1D" begin
 			@test index2addr([10])([0])==1
