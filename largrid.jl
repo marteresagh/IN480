@@ -13,8 +13,7 @@ function larSplit(dom)
     end
     return larSplit1
 end
-        
-        
+             
 function grid_0(n)
     return hcat([[i] for i in range(0,n+1)]...)
 end
@@ -34,6 +33,7 @@ function larGrid(n)
     return larGrid1
 end
 
+#funzioni costruite per gli esempi
 function grid0(n)
     return [[i] for i in range(1,n+1)] 
 end
@@ -53,6 +53,7 @@ function Cell(n)
     return Cell1
 end
 
+#estrazione facce da complessi cuboidali
 function larCuboidsFacets(V,cells)
     dim = size(V,1)
     n = 2^(dim-1)
@@ -69,6 +70,7 @@ function larCuboidsFacets(V,cells)
     return V,sort(facets, by = x -> x[1])
 end
 
+#estrazione facce da complessi simpliciali
 function larSimplexFacets(simplices)
 	out = Array{Int32,1}[]
 		d = length(simplices[1])
