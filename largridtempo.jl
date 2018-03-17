@@ -1,16 +1,16 @@
-#= Functions for grid generation and Cartesian product =#
-
 using IterTools
 using DataStructures
 using Combinatorics
 
 function larSplit(dom)
+    tic()
     function larSplit1(n)
         item = dom/n
         ints = range(0,n+1) 
         vertices=[ints*item;]
         return reshape(vertices,1,n+1)
     end
+    toc()
     return larSplit1
 end
         
@@ -24,6 +24,7 @@ function grid_1(n)
 end
 
 function larGrid(n)
+    tic()
     function larGrid1(d)
         if d==0 
             return grid_0(n)
@@ -31,10 +32,12 @@ function larGrid(n)
             return grid_1(n) 
         end
     end
+    toc()
     return larGrid1
 end
 
 function larCuboidsFacets(V,cells)
+    tic()
     dim = size(V,1)
     n = 2^(dim-1)
     facets = []
@@ -47,25 +50,30 @@ function larCuboidsFacets(V,cells)
         append!(facets,collect([facets0[:,i] for i in range(1,size(facets0)[2])]))
     end
     facets = unique(facets)
+    toc()
     return V,sort(facets, by = x -> x[1])
 end
 
 function larSimplexFacets(simplices)
+    tic()
 	out = Array{Int32,1}[]
 		d = length(simplices[1])
 		for simplex in simplices
 			append!(out,collect(combinations(simplex,d-1)))
 		end
+    toc()
 	return sort!(unique(out), lt=lexless)
 end
 
 function larSimplicialStack(simplices)
+    tic()
     dim=size(simplices[1],1)-1   
     faceStack = [simplices]
     for k in range(1,dim)
         faces = larSimplexFacets(faceStack[end])# errore nella chiamata ma p.funzione funziona
         append!(faceStack,[faces])
     end
+    toc()
     return flipdim(faceStack,1)
 end       
 
@@ -98,11 +106,13 @@ function larCellProd(cellLists)
    subscripts = cart([collect(range(0,shape)) for shape in shapes])
    indices = hcat([collect(tuple) for tuple in subscripts]...)
    jointCells = Any[]
+    tic()
    for h in 1:size(indices,2)
       index = indices[:,h]
       cell = hcat(cart([cells[k+1] for (k,cells) in zip(index,cellLists)])...)
       append!(jointCells,[cell])
    end
+    toc()
    convertIt = index2addr([ (length(cellLists[k][1]) > 1)? shape+1 : shape 
       for (k,shape) in enumerate(shapes) ])     
    [vcat(map(convertIt, jointCells[j])...) for j in 1:size(jointCells,1)]
@@ -118,6 +128,7 @@ function filterByOrder(n)
 end
 
 function larGridSkeleton(shape)
+    tic()
     n = length(shape)
     function larGridSkeleton0(d)
         components = filterByOrder(n)[d+1]
@@ -128,6 +139,7 @@ function larGridSkeleton(shape)
         out = [ larCellProd(cellLists)  for cellLists in componentCellLists ]
         return vcat(out...)
     end
+    toc()
     return larGridSkeleton0
 end
 
@@ -142,6 +154,7 @@ function larImageVerts(shape)
 end
 
 function larCuboids(shape, full=false)
+    tic()
    vertGrid = larImageVerts(shape)
    gridMap = larGridSkeleton(shape)
    if ! full
@@ -150,10 +163,12 @@ function larCuboids(shape, full=false)
       skeletonIds = 0:length(shape)
       cells = [ gridMap(id) for id in skeletonIds ]
    end
+    toc()
    return vertGrid, cells
 end
 
 function larModelProduct( modelOne, modelTwo )
+    tic()
     (V, cells1) = modelOne
     (W, cells2) = modelTwo
 
@@ -190,6 +205,7 @@ function larModelProduct( modelOne, modelTwo )
     end
     verts = hcat(vertexmodel...)
     cells = [[v for v in cell] for cell in cells]
+    toc()
     return (verts, cells)
 end
 
@@ -199,8 +215,10 @@ function larModelProduct(twoModels)
 end
 
 function gridSkeletons(shape)
+    tic()
     gridMap = larGridSkeleton(shape)
     skeletonIds = range(0,length(shape)+1)
     skeletons = [gridMap(id) for id in skeletonIds]
+    toc()
     return skeletons
 end

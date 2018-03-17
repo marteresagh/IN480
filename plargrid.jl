@@ -1,3 +1,6 @@
+#larGrid parallelizzato
+
+
 #= Functions for grid generation and Cartesian product =#
 
 using IterTools
@@ -5,12 +8,14 @@ using DataStructures
 using Combinatorics
 
 function larSplit(dom)
+    tic()
     function larSplit1(n)
         item = dom/n
         ints = range(0,n+1) 
         vertices=[ints*item;]
         return reshape(vertices,1,n+1)
     end
+    toc()
     return larSplit1
 end
         
@@ -24,6 +29,7 @@ function grid_1(n)
 end
 
 function larGrid(n)
+    tic()
     function larGrid1(d)
         if d==0 
             return grid_0(n)
@@ -31,14 +37,16 @@ function larGrid(n)
             return grid_1(n) 
         end
     end
+    toc()
     return larGrid1
 end
 
-function larCuboidsFacets(V,cells)
+function plarCuboidsFacets(V,cells)
     dim = size(V,1)
     n = 2^(dim-1)
     facets = []
-    for cell in cells
+	tic()
+    @sync for cell in cells
         Vert=hcat([V[:,i] for i in cell]...)
         coords = vcat(Vert,reshape(cell,(1,size(cell)[1])))
         doubleFacets=hcat([coords[:,sortperm(coords[k,:])] for k in range(1,dim)]...)
@@ -46,26 +54,31 @@ function larCuboidsFacets(V,cells)
         facets0 = reshape(lastRow,(n,Int(size(lastRow)[1]/n)))
         append!(facets,collect([facets0[:,i] for i in range(1,size(facets0)[2])]))
     end
-    facets = unique(facets)
+    toc()
+	facets = unique(facets)
     return V,sort(facets, by = x -> x[1])
 end
 
-function larSimplexFacets(simplices)
+function plarSimplexFacets(simplices)
+    tic()
 	out = Array{Int32,1}[]
 		d = length(simplices[1])
-		for simplex in simplices
+		@sync for simplex in simplices
 			append!(out,collect(combinations(simplex,d-1)))
 		end
+    toc()
 	return sort!(unique(out), lt=lexless)
 end
 
-function larSimplicialStack(simplices)
+function plarSimplicialStack(simplices)
+    tic()
     dim=size(simplices[1],1)-1   
     faceStack = [simplices]
-    for k in range(1,dim)
-        faces = larSimplexFacets(faceStack[end])# errore nella chiamata ma p.funzione funziona
+    @sync for k in range(1,dim)
+        faces = plarSimplexFacets(faceStack[end])# errore nella chiamata ma p.funzione funziona
         append!(faceStack,[faces])
     end
+    toc()
     return flipdim(faceStack,1)
 end       
 
@@ -93,19 +106,22 @@ function index2addr(shape::Array{Int32,2})
     return index2addr0
 end
 
-function larCellProd(cellLists)
+function plarCellProd(cellLists)
    shapes = [length(item) for item in cellLists]
    subscripts = cart([collect(range(0,shape)) for shape in shapes])
    indices = hcat([collect(tuple) for tuple in subscripts]...)
    jointCells = Any[]
-   for h in 1:size(indices,2)
+    tic()
+   @sync for h in 1:size(indices,2)
       index = indices[:,h]
       cell = hcat(cart([cells[k+1] for (k,cells) in zip(index,cellLists)])...)
       append!(jointCells,[cell])
    end
+    toc()
    convertIt = index2addr([ (length(cellLists[k][1]) > 1)? shape+1 : shape 
       for (k,shape) in enumerate(shapes) ])     
    [vcat(map(convertIt, jointCells[j])...) for j in 1:size(jointCells,1)]
+    
 end
 
 function binaryRange(n)
@@ -117,15 +133,17 @@ function filterByOrder(n)
    return [[term for term in terms if sum(term) == k] for k in 0:n]
 end
 
-function larGridSkeleton(shape)
+function plarGridSkeleton(shape)
     n = length(shape)
     function larGridSkeleton0(d)
+        tic()
         components = filterByOrder(n)[d+1]
         mymap(arr) = [arr[:,k]  for k in 1:size(arr,2)]
         componentCellLists = [ [ mymap(f(x)) for (f,x) in zip( [larGrid(dim) 
          for dim in shape],component ) ]
                for component in components ]
-        out = [ larCellProd(cellLists)  for cellLists in componentCellLists ]
+       out = [ plarCellProd(cellLists)  for cellLists in componentCellLists ]
+        toc()
         return vcat(out...)
     end
     return larGridSkeleton0
@@ -141,27 +159,30 @@ function larImageVerts(shape)
    return vertGrid
 end
 
-function larCuboids(shape, full=false)
+function plarCuboids(shape, full=false)
+    tic()
    vertGrid = larImageVerts(shape)
-   gridMap = larGridSkeleton(shape)
+   gridMap = plarGridSkeleton(shape)
    if ! full
       cells = gridMap(length(shape))
    else
       skeletonIds = 0:length(shape)
       cells = [ gridMap(id) for id in skeletonIds ]
    end
+    toc()
    return vertGrid, cells
 end
 
-function larModelProduct( modelOne, modelTwo )
+function plarModelProduct( modelOne, modelTwo )
+    tic()
     (V, cells1) = modelOne
     (W, cells2) = modelTwo
 
     vertices = DataStructures.OrderedDict(); 
     k = 1
-    for j in 1:size(V,2)
+    @sync for j in 1:size(V,2)
        v = V[:,j]
-        for i in 1:size(W,2)
+        @sync for i in 1:size(W,2)
           w = W[:,i]
             id = [v;w]
             if haskey(vertices, id) == false
@@ -172,11 +193,11 @@ function larModelProduct( modelOne, modelTwo )
     end
     
     cells = []
-    for c1 in cells1
-        for c2 in cells2
+    @sync for c1 in cells1
+        @sync for c2 in cells2
             cell = []
-            for vc in c1
-                for wc in c2 
+            @sync for vc in c1
+               @sync for wc in c2 
                     push!(cell, vertices[[V[:,vc];W[:,wc]]] )
                 end
             end
@@ -185,22 +206,25 @@ function larModelProduct( modelOne, modelTwo )
     end
     
     vertexmodel = []
-    for v in keys(vertices)
+    @sync for v in keys(vertices)
         push!(vertexmodel, v)
     end
     verts = hcat(vertexmodel...)
     cells = [[v for v in cell] for cell in cells]
+    toc()
     return (verts, cells)
 end
 
-function larModelProduct(twoModels)
+function plarModelProduct(twoModels)
     modelOne, modelTwo = twoModels
-    larModelProduct(modelOne, modelTwo)
+    plarModelProduct(modelOne, modelTwo)
 end
 
-function gridSkeletons(shape)
-    gridMap = larGridSkeleton(shape)
+function pgridSkeletons(shape)
+    tic()
+    gridMap = plarGridSkeleton(shape)
     skeletonIds = range(0,length(shape)+1)
     skeletons = [gridMap(id) for id in skeletonIds]
+    toc()
     return skeletons
 end

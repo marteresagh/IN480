@@ -22,6 +22,12 @@ function lar2hpc(V::Array{Float64,2},CV::Array{Array{Int,1},1})
 		hpc = p.STRUCT(p.MKPOLS(PyObject([W,CV,[]])))
 end
 	
+function lar2hpc(V::Array{Int32,2},CV::Array{Array{Int,1},1})
+		V = hcat(V[:,1],[V[:,k] for k in 1:size(V,2)]...)
+		W = [Any[V[h,k] for h=1:size(V,1)] for k=1:size(V,2)]
+		hpc = p.STRUCT(p.MKPOLS(PyObject([W,CV,[]])))
+end
+
 function VIEW(mod)
 		V,CV= mod
 		p.VIEW(lar2hpc(V,CV))

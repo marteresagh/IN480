@@ -1,4 +1,4 @@
-include("largrid.jl")
+include("largridtempo.jl")
 include("VIEW_FUNC.jl")
 
 function GRID(n)
@@ -11,6 +11,7 @@ function GRID(n)
     end
     return GRID1
 end
+
 #view di un quadrato e di un cubo costruito tramite il prodotto cartesiano
 mod_1 = larSplit(1)(1), GRID(1)(1)
 square = larModelProduct(mod_1,mod_1)
