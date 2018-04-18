@@ -37,7 +37,7 @@ end
 function larCuboidsFacets(V,cells)
     dim = size(V,1)
     n = 2^(dim-1)
-    facets = []
+    facets =  Array{Int32,1}[]
     for cell in cells
         Vert=hcat([V[:,i] for i in cell]...)
         coords = vcat(Vert,reshape(cell,(1,size(cell)[1])))
@@ -50,7 +50,7 @@ function larCuboidsFacets(V,cells)
     return V,sort(facets, by = x -> x[1])
 end
 
-function larSimplexFacets(simplices)
+function larSimplexFacets(simplices::Array{Array{Int32,1},1})
 	out = Array{Int32,1}[]
 		d = length(simplices[1])
 		for simplex in simplices
@@ -59,11 +59,11 @@ function larSimplexFacets(simplices)
 	return sort!(unique(out), lt=lexless)
 end
 
-function larSimplicialStack(simplices)
+function larSimplicialStack(simplices:: Array{Array{Int32,1},1})
     dim=size(simplices[1],1)-1   
     faceStack = [simplices]
     for k in range(1,dim)
-        faces = larSimplexFacets(faceStack[end])# errore nella chiamata ma p.funzione funziona
+        faces = larSimplexFacets(faceStack[end])
         append!(faceStack,[faces])
     end
     return flipdim(faceStack,1)
@@ -121,10 +121,8 @@ function larGridSkeleton(shape)
     n = length(shape)
     function larGridSkeleton0(d)
         components = filterByOrder(n)[d+1]
-        mymap(arr) = [arr[:,k]  for k in 1:size(arr,2)]
-        componentCellLists = [ [ mymap(f(x)) for (f,x) in zip( [larGrid(dim) 
-         for dim in shape],component ) ]
-               for component in components ]
+        mymap(arr) = [arr[:,k]  for k in 1:size(arr,2)]#una specie di trasposta 
+        componentCellLists = [ [ mymap(f(x)) for (f,x) in zip( [larGrid(dim) for dim in shape],component ) ]for component in components ]
         out = [ larCellProd(cellLists)  for cellLists in componentCellLists ]
         return vcat(out...)
     end
