@@ -14,9 +14,8 @@ function larSplit(dom)
     return larSplit1
 end
         
-        
 function grid_0(n)
-    return hcat([[i] for i in range(0,n+1)]...)
+    return hcat([range(0,n+1);]...)
 end
 
 function grid_1(n)
@@ -33,41 +32,6 @@ function larGrid(n)
     end
     return larGrid1
 end
-
-function larCuboidsFacets(V,cells)
-    dim = size(V,1)
-    n = 2^(dim-1)
-    facets =  Array{Int32,1}[]
-    for cell in cells
-        Vert=hcat([V[:,i] for i in cell]...)
-        coords = vcat(Vert,reshape(cell,(1,size(cell)[1])))
-        doubleFacets=hcat([coords[:,sortperm(coords[k,:])] for k in range(1,dim)]...)
-        lastRow=doubleFacets[dim+1,:]
-        facets0 = reshape(lastRow,(n,Int(size(lastRow)[1]/n)))
-        append!(facets,collect([facets0[:,i] for i in range(1,size(facets0)[2])]))
-    end
-    facets = unique(facets)
-    return V,sort(facets, by = x -> x[1])
-end
-
-function larSimplexFacets(simplices::Array{Array{Int32,1},1})
-	out = Array{Int32,1}[]
-		d = length(simplices[1])
-		for simplex in simplices
-			append!(out,collect(combinations(simplex,d-1)))
-		end
-	return sort!(unique(out), lt=lexless)
-end
-
-function larSimplicialStack(simplices:: Array{Array{Int32,1},1})
-    dim=size(simplices[1],1)-1   
-    faceStack = [simplices]
-    for k in range(1,dim)
-        faces = larSimplexFacets(faceStack[end])
-        append!(faceStack,[faces])
-    end
-    return flipdim(faceStack,1)
-end       
 
 # Cartesian product of collections in its unary argument
 function cart(args)
@@ -93,6 +57,7 @@ function index2addr(shape::Array{Int32,2})
     return index2addr0
 end
 
+#cellLists::Array{Array{Array{Int32,1},1},1} ovvero una lista di due liste di modelli lar
 function larCellProd(cellLists)
    shapes = [length(item) for item in cellLists]
    subscripts = cart([collect(range(0,shape)) for shape in shapes])
@@ -151,6 +116,24 @@ function larCuboids(shape, full=false)
    return vertGrid, cells
 end
 
+
+function larCuboidsFacets(V::Array{Int32,2},cells::Array{Array{Int32,1},1})
+    dim = size(V,1)
+    n = 2^(dim-1)
+    facets =  Array{Int32,1}[]
+    for cell in cells
+        Vert=hcat([V[:,i] for i in cell]...)
+        coords = vcat(Vert,reshape(cell,(1,size(cell)[1])))
+        doubleFacets=hcat([coords[:,sortperm(coords[k,:])] for k in range(1,dim)]...)
+        lastRow=doubleFacets[dim+1,:]
+        facets0 = reshape(lastRow,(n,Int(size(lastRow)[1]/n)))
+        append!(facets,collect([facets0[:,i] for i in range(1,size(facets0)[2])]))
+    end
+    facets = unique(facets)
+    return V,sort(facets, by = x -> x[1])
+end
+
+
 function larModelProduct( modelOne, modelTwo )
     (V, cells1) = modelOne
     (W, cells2) = modelTwo
@@ -195,6 +178,27 @@ function larModelProduct(twoModels)
     modelOne, modelTwo = twoModels
     larModelProduct(modelOne, modelTwo)
 end
+
+
+function larSimplexFacets(simplices)
+	out = Array{Int32,1}[]
+		d = length(simplices[1])
+		for simplex in simplices
+			append!(out,collect(combinations(simplex,d-1)))
+		end
+	return sort!(unique(out), lt=lexless)
+end
+
+function larSimplicialStack(simplices)
+    dim=size(simplices[1],1)-1   
+    faceStack = [simplices]
+    for k in range(1,dim)
+        faces = larSimplexFacets(faceStack[end])
+        append!(faceStack,[faces])
+    end
+    return flipdim(faceStack,1)
+end       
+
 
 function gridSkeletons(shape)
     gridMap = larGridSkeleton(shape)
