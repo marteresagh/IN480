@@ -4,6 +4,7 @@ using IterTools
 using DataStructures
 using Combinatorics
 
+#division of the real interval [0; dom] into n equal parts
 function larSplit(dom)
     function larSplit1(n)
         item = dom/n
@@ -57,7 +58,6 @@ function index2addr(shape::Array{Int32,2})
     return index2addr0
 end
 
-#cellLists::Array{Array{Array{Int32,1},1},1} ovvero una lista di due liste di modelli lar
 function larCellProd(cellLists)
    shapes = [length(item) for item in cellLists]
    subscripts = cart([collect(range(0,shape)) for shape in shapes])
@@ -82,11 +82,12 @@ function filterByOrder(n)
    return [[term for term in terms if sum(term) == k] for k in 0:n]
 end
 
+#Returns d-skeleton of cuboidal complex
 function larGridSkeleton(shape)
     n = length(shape)
     function larGridSkeleton0(d)
         components = filterByOrder(n)[d+1]
-        mymap(arr) = [arr[:,k]  for k in 1:size(arr,2)]#una specie di trasposta 
+        mymap(arr) = [arr[:,k]  for k in 1:size(arr,2)] 
         componentCellLists = [ [ mymap(f(x)) for (f,x) in zip( [larGrid(dim) for dim in shape],component ) ]for component in components ]
         out = [ larCellProd(cellLists)  for cellLists in componentCellLists ]
         return vcat(out...)
@@ -104,6 +105,7 @@ function larImageVerts(shape)
    return vertGrid
 end
 
+# Generation of cuboidal complex
 function larCuboids(shape, full=false)
    vertGrid = larImageVerts(shape)
    gridMap = larGridSkeleton(shape)
@@ -116,7 +118,7 @@ function larCuboids(shape, full=false)
    return vertGrid, cells
 end
 
-
+#Extraction of facets from cuboidal complexes
 function larCuboidsFacets(V::Array{Int32,2},cells::Array{Array{Int32,1},1})
     dim = size(V,1)
     n = 2^(dim-1)
@@ -179,7 +181,7 @@ function larModelProduct(twoModels)
     larModelProduct(modelOne, modelTwo)
 end
 
-
+#Simplicial face stack computation
 function larSimplexFacets(simplices)
 	out = Array{Int32,1}[]
 		d = length(simplices[1])
