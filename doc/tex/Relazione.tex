@@ -41,7 +41,7 @@
 \maketitle
 
 \tableofcontents
-
+%--------------------------------------------------------------------------------------------------------------------
 \section{Introduction}
 \subsection{Largrid - Module of LAR-CC library}
 This module of LAR-CC library, Largrid, develops an efficient implementation of multidimensional grid generation of cuboidal and simplicial cell complexes, using implementation of the more general Cartesian product of cellular complexes.
@@ -137,14 +137,71 @@ It’s usefull for the calculus of simplices.
 \emph{larCuboidsFacets}: It extracts facets from cuboidal complexes. It returns a tupla of vertices and facets.
 
 %-------------------------------------------------------------------------------
-\newpage
+
 \section{Scripts}
+\paragraph{Translation\\}
 Special attention is given to \emph{translation}. Main difference between Python and Julia language is the indexing of array. Python uses 0-based indexing, Julia uses 1-based indexing. It also changes the type of some methods because another difference between Python and Julia library is the type of vertices: in Python code, vertices are array in array; in Julia code, vertices are represented as two-dimensional array, matrix.
-\\ \\
+\paragraph{Improvement of functions\\}
 About the \emph{improvement} of the code, in technical-computing languages, it is common to have  \emph{vectorized} versions of functions, which simply apply a given function $f(x)$ to each element of an array $A$ to yield a new array via $f(A)$. In general, vectorized code replaces the loop for moving through a vector one component at a time. In Julia, function $f$ can be applied elementwise to any array (or other collection) with the syntax $f.(A)$.
 
 For some functions it also was possible to \emph{parallelize} the code.
 Parallel computing is a type of computation in which many calculations or the execution of processes are carried out concurrently. Large problems can often be divided into smaller ones, which can then be solved at the same time.
+\paragraph{Test\\}
+The \texttt{Base.Test} module provides simple unit testing functionality. Unit testing is a way to see if code is correct by checking that the results are what you expect. It can be helpful to ensure you code still works after you make changes, and can be used when developing as a way of specifying the behaviors your code should have when complete.\citep{julia}
+ 
+\begin{flushleft}\small
+\begin{list}{}{}\item
+\begin{Verbatim}[tabsize=4]
+using Base.Test
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\paragraph{Execution times\\}
+Parallel computing is performed on 4 processes in our computer. 
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+   \begin{Verbatim}[tabsize=4]
+n=4
+addprocs(n)
+
+using Plots
+
+N=10
+   \end{Verbatim}
+\end{list}
+\end{flushleft}
+\vspace{2ex}
+For studying \texttt{execution times} for each function we create this function \texttt{Time}.
+This function takes as input an integer value (the number of loops), function and its arguments, returns an array of all the execution times for each loop. 
+We use the macro $@elapsed$ to computing the execution time than the macro $@time$ that returns allocation memory too.  
+Since at the first call of $@elapsed$ $f(args)$, $f$ must be compiled, the first time we do not consider it, because it will certainly be longer than normal.
+
+\begin{list}{}{} \item
+   \begin{Verbatim}[tabsize=4]
+function Time(N::Int,f::Function,args)
+	timings = Array{Float64}(N)
+	@elapsed f(args)
+	for i in 1:N
+		timings[i] = @elapsed f(args)
+	end
+	return timings
+end
+   \end{Verbatim}
+\end{list}
+\vspace{2ex}
+For each function we compute the time with different input and we study mean and standard error $ e=\frac{std}{\sqrt{N}}$ with Julia methods \texttt{mean()} and \texttt{std()}.
+\\
+\\
+So there are two possibilities.
+
+For large N the time values for each individual input are more precise, since the computer calculates the times with an error. But having to do a lot of loops it is not possible to study for very large inputs, it will take too much time.
+
+For small N it is possible to increase the maximum input passed to the function and to study with less precision larger inputs.
+This study was done with $N = 10$ and changing the inputs if necessary.
+\vspace{2ex}
+
 \\ \\
 NOTE: for vectorized version, it has been inserted a prefix \texttt{v} ; for parallelized version, a prefix \texttt{p}.
 \\ \\
@@ -175,20 +232,18 @@ To use these functions on all processes, you have to use:
 
 \subsection{larSplit:}
 
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 
 \begin{flushleft} \small
-\vspace{1ex}
 \begin{center}
-\begin{tabular}{|p{8cm}|p{8cm}|}
+\begin{tabular}{|p{16cm}|}
 \hline
-\cellcolor[gray]{.9}Python& \cellcolor[gray]{.9}Julia\\
+\cellcolor[gray]{.9}Python\\
 \hline
 \end{tabular}
 \end{center}
 
-\begin{parcolumns}{2}
-   \colchunk{\begin{list}{}{} \item
+\begin{list}{}{} \item
 \begin{Verbatim}[tabsize=3]
 def larSplit(dom):
     def larSplit1(n):
@@ -203,8 +258,15 @@ def larSplit(dom):
 \end{Verbatim}
 \end{list}
 
-}
-   \colchunk[2]{\begin{list}{}{} \item
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Julia\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
 function larSplit(dom)
     function larSplit1(n)
@@ -217,28 +279,50 @@ function larSplit(dom)
 end
 \end{Verbatim}
 \end{list}
-}
-\end{parcolumns}
-\footnotesize\addtolength{\baselineskip}{-1ex}
 \end{flushleft}
 \vspace{2ex}
 This is a second order function, that is, it is applied to two arguments: the first argument is length of the interval as \texttt{float}, the second is the number of intervals as \texttt{int}. Python output is the list of $n + 1$ vertices $1D$, each represented as a singleton list. Julia output is list of $n + 1$ vertices $1D$, as bidimensional Array.
+
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "larSplit Tests" begin
+       quarto=larSplit(5)(4)[5]-larSplit(5)(4)[4]
+       terzo=larSplit(5)(4)[4]-larSplit(5)(4)[3]
+       secondo=larSplit(5)(4)[3]-larSplit(5)(4)[2]
+       primo=larSplit(5)(4)[2]-larSplit(5)(4)[1]    
+           @test primo == 1.25
+           @test secondo == 1.25
+           @test terzo == 1.25
+           @test quarto == 1.25
+end
+\end{Verbatim}
+\end{list}
+\end{flushleft}
 %-------------------------------------------------------------------------------
 
 \subsection{larGrid:}
 
 \begin{flushleft} \small
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 \vspace{1ex}
 \begin{center}
-\begin{tabular}{|p{8cm}|p{8cm}|}
+\begin{tabular}{|p{16cm}|}
 \hline
-\cellcolor[gray]{.9}Python& \cellcolor[gray]{.9}Julia\\
+\cellcolor[gray]{.9}Python\\
 \hline
 \end{tabular}
 \end{center}
-\begin{parcolumns}{2}
-   \colchunk{\begin{list}{}{} \item
+\begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
 def grid0(n):
     cells = AA(LIST)(range(n+1))
@@ -257,8 +341,15 @@ def larGrid(n):
 \end{Verbatim}
 \end{list}
 
-}
-   \colchunk[2]{\begin{list}{}{} \item
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Julia\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
 function grid_0(n)
     return hcat([range(0,n+1);]...)
@@ -280,8 +371,6 @@ function larGrid(n)
 end
 \end{Verbatim}
 \end{list}
-}
-\end{parcolumns}
 \end{flushleft}
 \vspace{2ex}
 This function is usefull to generate uniform $0D$ and $1D$ cellular complex, with $n$ cells.
@@ -291,7 +380,7 @@ In translated code standard methods of Python, like \texttt{AA()()} ( = ApplyToA
 \vspace{1ex}
 This version shouldn't be taken into account.
 
-In Section "Execution times", we are going to prove with an example, comparing execution times, that this type of parallelization does not work. Indeed the execution time is higher then serial version, due to the fact that it takes time to distribute the "fake" work on all the processes, because the workers do not have a real work to do.
+In Section "Execution time", we are going to prove with an example, comparing execution times, that this type of parallelization does not work. Indeed the execution time is higher then serial version, due to the fact that it takes time to distribute the "fake" work on all the processes, because the workers do not have a real work to do.
 \begin{flushleft} \small
 \begin{center}
 \begin{tabular}{|p{16cm}|}
@@ -335,12 +424,154 @@ end
 Macro \texttt{@everywhere expr} execute an expression under Main everywhere, on all processes. The construct, \texttt{@parallel (reduction) for}, implements the pattern of assigning iterations to multiple processes, and combining them with a specified reduction (in this case (\texttt{hcat})). 
 \vspace{2ex}
 
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "larGrid Tests" begin
+	@testset "grid_0" begin
+			@test grid_0(1) == [0  1]
+			@test grid_0(2) == [0  1  2]
+			@test grid_0(3) == [0  1  2  3]
+	end
+   
+	@testset "grid_1 Tests" begin
+			@test repr(grid_1(1)) == "[0; 1]"
+			@test grid_1(2) == [0 1; 1 2]
+			@test grid_1(3) == [0 1 2; 1 2 3]
+	end
+   
+	@testset "larGrid" begin
+			@test repr(larGrid(1)(0)) == "[0 1]"
+			@test repr(larGrid(1)(1)) == "[0; 1]"
+			@test larGrid(2)(0) == [0  1  2]
+			@test larGrid(2)(1) == [0 1; 1 2]
+	end
+end 
+
+@testset "plarGrid Tests" begin
+   		@testset "pgrid_0" begin
+    			@test pgrid_0(1) == [0  1]
+    			@test pgrid_0(2) == [0  1  2]
+    			@test pgrid_0(3) == [0  1  2  3]
+		end
+       
+		@testset "pgrid_1 Tests" begin
+      			@test repr(pgrid_1(1)) == "[0, 1]"
+    			@test pgrid_1(2) == [0 1; 1 2]
+    			@test pgrid_1(3) == [0 1 2; 1 2 3]
+		end
+   
+   		@testset "plarGrid" begin
+    			@test repr(plarGrid(1)(0)) == "[0 1]"
+    			@test repr(plarGrid(1)(1)) == "[0, 1]"
+    			@test plarGrid(2)(0) == [0  1  2]
+    			@test plarGrid(2)(1) == [0 1; 1 2]
+    			@test plarGrid(3)(0) == [0  1  2  3]
+    			@test plarGrid(3)(1) == [0  1  2; 1  2  3]
+		end
+end 
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
+Let us now prove what we have mentioned before in the parallelization of the larGrid function.
+In this example it is clear that the parallelized loop works very well, because the workers have a job to do.
+\begin{flushleft}\small
+\begin{list}{}{} \item
+   \begin{Verbatim}[tabsize=4]
+Input: s=0; @elapsed for i in 1:200000000
+       s=s+Int(rand(Bool))
+       end
+Output: 23.247962902
+
+Input: @elapsed nheads = @parallel (+) for i = 1:200000000
+           Int(rand(Bool))
+       end
+Output: 1.744299978
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+Comparing the times of the serial version with parallel version of larGrid function, it is easy to notice that the parallelization does not work.
+\vspace{2ex}
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datas=[Time(N,larGrid(j),(1)) for j in [10^2,5*10^2,10^3,5*10^3,10^4,5*10^4,10^5]]
+
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs,
+                        xaxis="Input", title="larGrid",label=["Serial"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft} 
+
+\paragraph{Parallel}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,plarGrid(j),(1)) for j in [10^2,5*10^2,10^3,5*10^3,10^4,5*10^4,10^5]]
+
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp,
+                    xaxis="Input", title="larGrid",label=["Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridSer.png}
+\includegraphics[scale=0.06]{larGridPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xp]
+y=[ys,yp]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input",
+                            title="larGrid",label=["Serial" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+\vspace{3ex}
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridCom.png}
+\end{figure}
+
+\vspace{4ex}
+
 %-------------------------------------------------------------------------------
-\newpage
 \subsection{larCuboidsFacets:}
 
 \begin{flushleft} \small
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 \vspace{1ex}
 \begin{center}
 \begin{tabular}{|p{16cm}|}
@@ -499,7 +730,8 @@ end
    \end{Verbatim}
 \end{list}
 \vspace{2ex}
-\newpage
+
+
 \begin{center}
 \begin{tabular}{|p{16cm}|}
 \hline
@@ -508,6 +740,7 @@ end
 \end{tabular}
 \end{center}
 \vspace{2ex}
+
 \begin{list}{}{} \item
    \begin{Verbatim}[tabsize=4]
 @everywhere function pmlarCuboidsFacets0(n,dim,V,facets)
@@ -541,16 +774,185 @@ function pmlarCuboidsFacets(model)
 end
    \end{Verbatim}
 \end{list}
-
-\vspace{2ex}
-\footnotesize\addtolength{\baselineskip}{-1ex}
 \end{flushleft}
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+@testset "larCuboidsFacets Tests" begin
+		@test length(larCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
+		@test size(larCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
+end
+	
+@testset "vlarCuboidsFacets Tests" begin
+		    @test length(vlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
+		    @test size(vlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
+end
+
+@testset "plarCuboidsFacets Tests" begin
+		    @test length(plarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
+    		@test size(plarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
+    	end
+	
+@testset "pmlarCuboidsFacets Tests" begin
+    		@test length(pmlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
+    		@test size(pmlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
+end
+   \end{Verbatim}
+\end{list}
+\end{flushleft}
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+input=[larCuboids([n,n,n]) for n in [1:20;]]
+
+datas=[Time(N,larCuboidsFacets,(j)) for j in input]
+
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input",
+                                            title="larCuboidsFacets",label=["Serial"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+
+\paragraph{Vectorize}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datav=[Time(N,vlarCuboidsFacets,j) for j in input]
+
+xv=[1:length(datav);]
+yv=mean.(datav)
+yerrv=std.(datav)/sqrt(N)
+
+plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input",   
+                                        title="larCuboidsFacets",label=["Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsFacetsSer.png}
+\includegraphics[scale=0.06]{larCuboidsFacetsVec.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv]
+y=[ys,yv]
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input",
+             title="larCuboidsFacets",label=["Serial" "Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsFacetsCom1.png}
+\end{figure}
+
+The best construct to use in parallelized version seems to be the Julia standard method \texttt{pmap()}.
+\paragraph{Parallel Map}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+
+input=[larCuboids([n,n,n]) for n in [1:6;]]
+
+datapm=[Time(N,pmlarCuboidsFacets,j) for j in input]
+
+xpm=[1:length(datapm);]
+ypm=mean.(datapm)
+yerrpm=std.(datapm)/sqrt(N)
+
+plot(xpm,ypm,yaxis="Time (s)",xlims = (0,length(datapm)+1), yerr = yerrpm, xaxis="Input", 
+                                            title="larCuboidsFacets",label=["Parallel Map"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft} 
+
+\paragraph{Parallel Loop}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,plarCuboidsFacets,j) for j in input]
+
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
+                                        title="larCuboidsFacets",label=["Parallel Loop"],lw=1)
+   \end{Verbatim}
+\end{list}
+\end{flushleft} 
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsFacetsParMap.png}
+\includegraphics[scale=0.06]{larCuboidsFacetsPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xp, xpm]
+y=[yp,ypm]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larCuboidsFacets",
+                                                        label=["Parallel Loop" "Parallel Map"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsFacetsComPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xp]
+y=[ys,yp]
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datas)+1), xaxis="Input", title="larCuboidsFacets",
+                                                                        label=["Serial" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft} 
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsFacetsCom.png}
+\end{figure}
+
 %-------------------------------------------------------------------------------
 
 \subsection{larSimplicialStack:}
 \vspace{1ex}
-
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 \vspace{1ex}
 \begin{flushleft} \small
 \begin{center}
@@ -581,6 +983,7 @@ def larSimplicialStack(simplices):
 \end{Verbatim}
 \end{list}
 \vspace{2ex}
+\newpage
 \begin{center}
 \begin{tabular}{|p{16cm}|}
 \hline
@@ -653,10 +1056,135 @@ end
 \vspace{2ex}
 Loop inside \texttt{LarSimplicialStack} has not been further parallelized since it calls  \texttt{larSimplexFacets} on the last element added in the array, with the command \texttt{end}
 \vspace{2ex}
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "larSimplicialStack Tests" begin
+        @testset "euler" begin
+			triang2d=[[1,2,3],[2,3,4],[3,4,5]]
+            triang3d=[[1,2,3,4],[2,3,4,5],[2,4,5,6],[4,5,6,7],[3,4,5,7],[3,4,7,9],
+                  [3,4,8,9],[1,3,4,8],[1,2,4,6],[1,4,6,8],[4,6,8,9],[4,6,7,9]]
+            Vert2d=length(larSimplicialStack(triang2d)[1])
+            Seg2d=length(larSimplicialStack(triang2d)[2])
+            Fac2d=length(larSimplicialStack(triang2d)[3])
+            Vert3d=length(larSimplicialStack(triang3d)[1])
+            Seg3d=length(larSimplicialStack(triang3d)[2])
+            Fac3d=length(larSimplicialStack(triang3d)[3])
+            Cel3d=length(larSimplicialStack(triang3d)[4])
+                @test Vert2d-Seg2d+Fac2d == 1
+                @test Vert3d-Seg3d+Fac3d-Cel3d == 1
+		end
+		
+		@testset "proof" begin
+			@testset "$shape" for shape in [[1,2,3,4],[2,3,4,5,6]]
+				@test length(larSimplicialStack([shape])) == length(shape)
+				@test typeof(larSimplicialStack([shape])) == Array{Array{Array{Int64,1},1},1}
+			end
+		end
+end	
+	
+@testset "plarSimplicialStack Tests" begin
+            @testset "euler" begin
+    			triang2d=[[1,2,3],[2,3,4],[3,4,5]]
+                triang3d=[[1,2,3,4],[2,3,4,5],[2,4,5,6],[4,5,6,7],[3,4,5,7],[3,4,7,9],
+                      [3,4,8,9],[1,3,4,8],[1,2,4,6],[1,4,6,8],[4,6,8,9],[4,6,7,9]]
+                Vert2d=length(plarSimplicialStack(triang2d)[1])
+                Seg2d=length(plarSimplicialStack(triang2d)[2])
+                Fac2d=length(plarSimplicialStack(triang2d)[3])
+                Vert3d=length(plarSimplicialStack(triang3d)[1])
+                Seg3d=length(plarSimplicialStack(triang3d)[2])
+                Fac3d=length(plarSimplicialStack(triang3d)[3])
+                Cel3d=length(plarSimplicialStack(triang3d)[4])
+                    @test Vert2d-Seg2d+Fac2d == 1
+                    @test Vert3d-Seg3d+Fac3d-Cel3d == 1
+    		end
+		
+	    	@testset "proof" begin
+		    	@testset "$shape" for shape in [[1,2,3,4],[2,3,4,5,6]]
+			    	@test length(plarSimplicialStack([shape])) == length(shape)
+				    @test typeof(plarSimplicialStack([shape])) ==  Array{Array{Array{Int64,1},1},1}
+			    end
+		    end
+end	
+
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
+
+
+
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datas=[Time(N,larSimplicialStack,[[1:j;]]) for j in range(4,15)]
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input",
+                                            title="larSimplicialStack",label=["Serial"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft} 
+
+\paragraph{Parallel}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,plarSimplicialStack,[[1:j;]]) for j in range(4,15)]
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input",
+                                        title="larSimplicialStack",label=["Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larSimplicialStackSer.png}
+\includegraphics[scale=0.06]{larSimplicialStackPar.png}
+\end{figure}
+
+\paragraph{Compare}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xp]
+y=[ys,yp]
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input",
+            title="larSimplicialStack",label=["Serial" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larSimplicialStackCom.png}
+\end{figure}
+
 %-------------------------------------------------------------------------------
 \subsection{larGridSkeleton:}
 
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 To be able to generate the various subsets of cells of a $d$-dimensional cuboidal grid skeleton, you needed of other results. 
 
 First of all, the grid vertices are produced by the \texttt{larVertProd} function, via Cartesian product of
@@ -940,10 +1468,230 @@ end
 \end{flushleft}
 \vspace{2ex}
 
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "Index2addr Tests" begin
+		@testset "shape 1D" begin
+			@test index2addr([10])([0])==1
+			@test index2addr([10])([9])==10
+			@test [index2addr([10])([index]) for index in collect(0:9)]==collect(1:10)
+		end
+
+		@testset "shape 3d" begin
+		aaa = cart([collect(0:3),collect(0:2),collect(0:1)])
+		bbb = cart([[0;1;2],[0;1],[0;1]])
+		ccc = cart([[0;1],[0;1],[0;1;2]])
+			@test index2addr([3,2,1])([0,0,0]) == 1
+			@test [ index2addr([4,3,2])(index) for index in aaa ] == collect(1:24)
+			@test [index2addr([3,2,2])(index) for index in bbb ] == collect(1:12)
+			@test [index2addr([2,2,3])(index) for index in ccc ] == collect(1:12)
+		end
+end
+
+@testset "BinaryRange Tests" begin
+		@test binaryRange(1)==["0";"1"]
+		@test binaryRange(2)==["00","01","10","11"]
+		@test binaryRange(3)==["000","001","010","011","100","101","110","111"]
+end
+
+@testset "LarVertProd Tests" begin
+		@testset "LarVertProd 1D" begin
+			shape = [3]
+			vertLists = [vertexDomain(k+1) for k in shape]
+			@test typeof(larVertProd(vertLists))==Array{Int64,2}
+			@test size(larVertProd(vertLists))==(1, 4)
+			@test larVertProd(vertLists)[:,1]==[0]
+			@test larVertProd(vertLists)[:,4]==[3]
+		end
+
+		@testset "LarVertProd 2D" begin
+			shape = [3,2]
+			vertLists = [vertexDomain(k+1) for k in shape]
+			@test typeof(larVertProd(vertLists))==Array{Int64,2}
+			@test size(larVertProd(vertLists))==(2, 12)
+			@test larVertProd(vertLists)[:,1]==[0;0]
+			@test larVertProd(vertLists)[:,12]==[3;2]
+		end
+
+		@testset "LarVertProd 3D" begin
+			shape = [3,2,1]
+			vertLists = [vertexDomain(k+1) for k in shape]
+			@test typeof(larVertProd(vertLists))==Array{Int64,2}
+			@test size(larVertProd(vertLists))==(3, 24)
+			@test larVertProd(vertLists)[:,1]==[0;0;0]
+			@test larVertProd(vertLists)[:,24]==[3;2;1]
+		end
+end
+
+@testset "FilterByOrder Tests" begin
+		term = "000"
+		bit = '0'
+		theTerm = convert(Array{Char,1},term)
+		@test typeof(theTerm) == Array{Char,1}
+		@test parse(Int8,bit) == 0
+		@test [parse(Int8,bit) for bit in theTerm] == zeros(3)
+		out = hcat([[parse(Int8,bit) for bit in term] for term in binaryRange(3)]...)
+		@test typeof(out) == Array{Int8,2}
+		@test size(out) == (3,8)
+		@test repr(out) == "Int8[0 0 0 0 1 1 1 1; 0 0 1 1 0 0 1 1; 0 1 0 1 0 1 0 1]"
+end
+	
+@testset "larGridSkeleton Tests" begin
+		@test length(larGridSkeleton([1,1,1])(0)) == 8
+		@test length(larGridSkeleton([1,1,1])(1)) == 12
+		@test length(larGridSkeleton([1,1,1])(2)) == 6
+		@test length(larGridSkeleton([1,1,1])(3)) == 1
+end
+
+@testset "vBinaryRange Tests" begin
+		    @test vbinaryRange(1)==["0";"1"]
+		    @test vbinaryRange(2)==["00","01","10","11"]
+		    @test vbinaryRange(3)==["000","001","010","011","100","101","110","111"]
+	    end
+
+	    @testset "vfilterByOrder Tests" begin
+		    @testset  "$n" for n in 1:4
+			    data = [vfilterByOrder(n)[k] for (k,el) in enumerate(vfilterByOrder(n))]
+			    @test sum(map(length,data)) == 2^n
+		    end
+
+		    @testset "$n,$k" for n in 1:4, k in 0:n
+			    @test length(vfilterByOrder(n)[k+1]) == binomial(n,k)
+		    end 
+end
+
+@testset "vlarGridSkeleton Tests" begin
+		    @test length(vlarGridSkeleton([1,1,1])(0)) == 8
+		    @test length(vlarGridSkeleton([1,1,1])(1)) == 12
+		    @test length(vlarGridSkeleton([1,1,1])(2)) == 6
+		    @test length(vlarGridSkeleton([1,1,1])(3)) == 1
+end
+	    
+@testset "plarGridSkeleton Tests" begin
+    		@test length(plarGridSkeleton([1,1,1])(0)) == 8
+    		@test length(plarGridSkeleton([1,1,1])(1)) == 12
+    		@test length(plarGridSkeleton([1,1,1])(2)) == 6
+    		@test length(plarGridSkeleton([1,1,1])(3)) == 1
+end
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
+
+
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datas=[Time(N,larGridSkeleton([j,j,j]),1) for j in range(1,10)]
+
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
+                                            title="larGridSkeleton",label=["Serial"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+
+\paragraph{Vectorize}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datav=[Time(N,vlarGridSkeleton([j,j,j]),1) for j in range(1,10)]
+
+xv=[1:length(datav);]
+yv=mean.(datav)
+yerrv=std.(datav)/sqrt(N)
+
+plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
+                                        title="larGridSkeleton",label=["Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridSkeletonSer.png}
+\includegraphics[scale=0.06]{larGridSkeletonVec.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv]
+y=[ys,yv]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larGridSkeleton",
+                                                                label=["Serial" "Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridSkeletonCom1.png}
+\end{figure}
+
+\paragraph{Parallel}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,plarGridSkeleton([j,j,j]),1) for j in range(1,6)]
+
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
+                                            title="larGridSkeleton",label=["Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridSkeletonPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv,xp]
+y=[ys,yv,yp]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larGridSkeleton",
+                                                        label=["Serial" "Vectorize" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larGridSkeletonCom.png}
+\end{figure}
+
 %-------------------------------------------------------------------------------
 \subsection{larModelProduct:}
 
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 This function has not been parallelized. In particular, first loop of vertices generation, compares previous results, so that it can not be run in parallel mode. Therefore, there is only the translation.
 \vspace{1ex}
 \begin{flushleft} \small
@@ -1031,11 +1779,37 @@ end
 \footnotesize\addtolength{\baselineskip}{-1ex}
 \end{flushleft}
 The \texttt{larModelProduct} function takes as input a pair of LAR models and returns the model of their Cartesian product. LAR model is a pair (geometry, topology), so this function create the right set of vertices and cells of the output model, using $dictionaries$. \texttt{OrderedDict()}, which comes from the package \texttt{DataStructures}, creates ordered dictionaries, that are simply dictionaries whose entries have a particular order. The order refers to insertion order, which allows deterministic iteration over the dictionary or set.
+\newpage
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "larModelProduct" begin
+	geom_0,topol_0 = larSplit(2)(3),[[1,2],[2,3],[3,4]]
+	geom_1,topol_1 = larSplit(3)(2), [[1,2],[2,3]]
+	mod_0 = (geom_0,topol_0)
+	mod_1 = (geom_1,topol_1)
+	V,CV = larModelProduct([mod_0,mod_1])
+	@test size(V,2)==12
+	@test length(CV)==6
+end
+
+\end{Verbatim}
+\end{list}
+\end{flushleft}
 %-------------------------------------------------------------------------------
 
 \subsection{larCuboids:}
 
-\subsubsection{Python to Julia}
+\subsubsection{Translation}
 Here, translation is simple. This function generates cuboidal complex in full-dimensions and it's also possible include cells of all dimensions, depending on the Boolean value of the \texttt{full} parameter.
 \vspace{1ex}
 \begin{flushleft} \small
@@ -1174,25 +1948,157 @@ end
 end
    \end{Verbatim}
 \end{list}
-
-\vspace{-1ex}
-
 \end{flushleft}
-%-------------------------------------------------------------------------------
-\subsection{gridSkeletons:}
-
-\begin{flushleft} \small
-\subsubsection{Python to Julia}
-\vspace{1ex}
+\subsubsection{Test}
 \begin{center}
-\begin{tabular}{|p{8cm}|p{8cm}|}
+\begin{tabular}{|p{16cm}|}
 \hline
-\cellcolor[gray]{.9}Python& \cellcolor[gray]{.9}Julia\\
+\cellcolor[gray]{.9}Test\\
 \hline
 \end{tabular}
 \end{center}
-\begin{parcolumns}[colwidths={1=0.45\linewidth}]{2}
-\colchunk{
+
+\begin{flushleft}\small
+\begin{list}{}{} \item
+\begin{Verbatim}[tabsize=4]
+@testset "LarImageVerts Tests" "$shape" for shape in [[3,2,1],[3,2],[10,10,10]]
+		@test size(larImageVerts(shape)) == (length(shape),prod(shape + 1))
+end
+
+@testset "vLarImageVerts Tests" "$shape" for shape in [[3,2,1],[3,2],[10,10,10]]
+		    @test size(vlarImageVerts(shape)) == (length(shape),prod(shape + 1))
+end
+
+@testset "larCuboids" begin
+	V,CV=larCuboids([1,1,1])
+	@test size(V,2)==8
+	@test length(CV)==1
+end
+
+\end{Verbatim}
+\end{list}
+\end{flushleft}
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
+
+
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datas=[Time(N,larCuboids,[j,j,j]) for j in range(1,30)]
+
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
+                                                title="larCuboids",label=["Serial"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft} 
+
+\paragraph{Vectorize}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datav=[Time(N,vlarCuboids,[j,j,j]) for j in range(1,30)]
+
+xv=[1:length(datav);]
+yv=mean.(datav)
+yerrv=std.(datav)/sqrt(N)
+
+plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
+                                                title="larCuboids",label=["Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsSer.png}
+\includegraphics[scale=0.06]{larCuboidsVec.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv]
+y=[ys,yv]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="larCuboids",
+                                                label=["Serial" "Vectorize" "Parallel"],lw=1)
+
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsCom1.png}
+\end{figure}
+
+\paragraph{Parallel}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,plarCuboids,[j,j,j]) for j in range(1,6)]
+
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrp, xaxis="Input", 
+                                                title="larCuboids",label=["Parallel"],lw=1)
+ \end{Verbatim}
+\end{list}
+\end{flushleft}   
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv,xp]
+y=[ys,yv,yp]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="larCuboids",
+                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}  
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{larCuboidsCom.png}
+\end{figure}
+
+
+%-------------------------------------------------------------------------------
+\subsection{gridSkeletons:}
+\subsubsection{Translation}
+\begin{flushleft} \small
+
+\vspace{1ex}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Python\\
+\hline
+\end{tabular}
+\end{center}
+
 
 \begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
@@ -1203,8 +2109,15 @@ def gridSkeletons(shape):
    return skeletons
 \end{Verbatim}
 \end{list}
-}
-   \colchunk[2]{
+
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Julia\\
+\hline
+\end{tabular}
+\end{center}
+
 \begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
 function gridSkeletons(shape)
@@ -1215,8 +2128,6 @@ function gridSkeletons(shape)
 end
 \end{Verbatim}
 \end{list}
-}
-\end{parcolumns}
 
 \vspace{2ex}
 
@@ -1266,180 +2177,19 @@ end
 \footnotesize\addtolength{\baselineskip}{-1ex}
 \end{flushleft}
 
-%-----------------------------------------------------------------
-\section{Tests and examples}
-\subsection{Tests}
+\subsubsection{Test}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Test\\
+\hline
+\end{tabular}
+\end{center}
 
-The \texttt{Base.Test} module provides simple unit testing functionality. Unit testing is a way to see if code is correct by checking that the results are what you expect. It can be helpful to ensure you code still works after you make changes, and can be used when developing as a way of specifying the behaviors your code should have when complete.\citep{julia}
- 
 \begin{flushleft}\small
-\begin{list}{}{}\item
+\begin{list}{}{} \item
 \begin{Verbatim}[tabsize=4]
-using Base.Test
-
-@testset "Module Tests" begin
-
-	@testset "larSplit Tests" begin
-           quarto=larSplit(5)(4)[5]-larSplit(5)(4)[4]
-           terzo=larSplit(5)(4)[4]-larSplit(5)(4)[3]
-           secondo=larSplit(5)(4)[3]-larSplit(5)(4)[2]
-           primo=larSplit(5)(4)[2]-larSplit(5)(4)[1]    
-               @test primo == 1.25
-               @test secondo == 1.25
-               @test terzo == 1.25
-               @test quarto == 1.25
-	end
-
-	@testset "larGrid Tests" begin
-		@testset "grid_0" begin
-			@test grid_0(1) == [0  1]
-			@test grid_0(2) == [0  1  2]
-			@test grid_0(3) == [0  1  2  3]
-		end
-   
-		@testset "grid_1 Tests" begin
-			@test repr(grid_1(1)) == "[0; 1]"
-			@test grid_1(2) == [0 1; 1 2]
-			@test grid_1(3) == [0 1 2; 1 2 3]
-		end
-   
-		@testset "larGrid" begin
-			@test repr(larGrid(1)(0)) == "[0 1]"
-			@test repr(larGrid(1)(1)) == "[0; 1]"
-			@test larGrid(2)(0) == [0  1  2]
-			@test larGrid(2)(1) == [0 1; 1 2]
-		end
-	end 
-
-	@testset "Index2addr Tests" begin
-		@testset "shape 1D" begin
-			@test index2addr([10])([0])==1
-			@test index2addr([10])([9])==10
-			@test [index2addr([10])([index]) for index in collect(0:9)]==collect(1:10)
-		end
-
-		@testset "shape 2d" begin
-		aa = cart([[0;1;2],[0;1]])
-		bb = cart([collect(0:9),collect(0:1)])
-		cc = cart([collect(0:2),collect(0:2)])
-		dd = "Tuple{Int64,Int64}[(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)]"
-			@test [ index2addr([3,2])(index) for index in aa ]==collect(1:6)
-			@test [ index2addr([10,2])(index) for index in bb ] == collect(1:20)
-			@test [ index2addr([3,3])(index) for index in cc] == collect(1:9)
-			@test repr( cart([collect(0:2),collect(0:1)]) )==dd
-		end
-
-		@testset "shape 3d" begin
-		aaa = cart([collect(0:3),collect(0:2),collect(0:1)])
-		bbb = cart([[0;1;2],[0;1],[0;1]])
-		ccc = cart([[0;1],[0;1],[0;1;2]])
-			@test index2addr([3,2,1])([0,0,0]) == 1
-			@test [ index2addr([4,3,2])(index) for index in aaa ] == collect(1:24)
-			@test [index2addr([3,2,2])(index) for index in bbb ] == collect(1:12)
-			@test [index2addr([2,2,3])(index) for index in ccc ] == collect(1:12)
-		end
-	end
-
-	@testset "BinaryRange Tests" begin
-		@test binaryRange(1)==["0";"1"]
-		@test binaryRange(2)==["00","01","10","11"]
-		@test binaryRange(3)==["000","001","010","011","100","101","110","111"]
-	end
-
-	@testset "LarVertProd Tests" begin
-		@testset "LarVertProd 1D" begin
-			shape = [3]
-			vertLists = [vertexDomain(k+1) for k in shape]
-			@test typeof(larVertProd(vertLists))==Array{Int64,2}
-			@test size(larVertProd(vertLists))==(1, 4)
-			@test larVertProd(vertLists)[:,1]==[0]
-			@test larVertProd(vertLists)[:,4]==[3]
-		end
-
-		@testset "LarVertProd 2D" begin
-			shape = [3,2]
-			vertLists = [vertexDomain(k+1) for k in shape]
-			@test typeof(larVertProd(vertLists))==Array{Int64,2}
-			@test size(larVertProd(vertLists))==(2, 12)
-			@test larVertProd(vertLists)[:,1]==[0;0]
-			@test larVertProd(vertLists)[:,12]==[3;2]
-		end
-
-		@testset "LarVertProd 3D" begin
-			shape = [3,2,1]
-			vertLists = [vertexDomain(k+1) for k in shape]
-			@test typeof(larVertProd(vertLists))==Array{Int64,2}
-			@test size(larVertProd(vertLists))==(3, 24)
-			@test larVertProd(vertLists)[:,1]==[0;0;0]
-			@test larVertProd(vertLists)[:,24]==[3;2;1]
-		end
-	end
-
-	@testset "FilterByOrder Tests" begin
-		term = "000"
-		bit = '0'
-		theTerm = convert(Array{Char,1},term)
-		@test typeof(theTerm) == Array{Char,1}
-		@test parse(Int8,bit) == 0
-		@test [parse(Int8,bit) for bit in theTerm] == zeros(3)
-		out = hcat([[parse(Int8,bit) for bit in term] for term in binaryRange(3)]...)
-		@test typeof(out) == Array{Int8,2}
-		@test size(out) == (3,8)
-		@test repr(out) == "Int8[0 0 0 0 1 1 1 1; 0 0 1 1 0 0 1 1; 0 1 0 1 0 1 0 1]"
-	end
-
-	@testset "LarImageVerts Tests" "$shape" for shape in [[3,2,1],[3,2],[10,10,10]]
-		@test size(larImageVerts(shape)) == (length(shape),prod(shape + 1))
-	end
-
-	@testset "FilterByOrder Tests" begin
-		@testset  "$n" for n in 1:4
-			data = [filterByOrder(n)[k] for (k,el) in enumerate(filterByOrder(n))]
-			@test sum(map(length,data)) == 2^n
-		end
-
-		@testset "$n,$k" for n in 1:4, k in 0:n
-			@test length(filterByOrder(n)[k+1]) == binomial(n,k)
-		end 
-	end
-
-	@testset "larGridSkeleton Tests" begin
-		@test length(larGridSkeleton([1,1,1])(0)) == 8
-		@test length(larGridSkeleton([1,1,1])(1)) == 12
-		@test length(larGridSkeleton([1,1,1])(2)) == 6
-		@test length(larGridSkeleton([1,1,1])(3)) == 1
-	end
-
-	@testset "larSimplicialStack Tests" begin
-        @testset "euler" begin
-			triang2d=[[1,2,3],[2,3,4],[3,4,5]]
-            triang3d=[[1,2,3,4],[2,3,4,5],[2,4,5,6],[4,5,6,7],[3,4,5,7],[3,4,7,9],
-                  [3,4,8,9],[1,3,4,8],[1,2,4,6],[1,4,6,8],[4,6,8,9],[4,6,7,9]]
-            Vert2d=length(larSimplicialStack(triang2d)[1])
-            Seg2d=length(larSimplicialStack(triang2d)[2])
-            Fac2d=length(larSimplicialStack(triang2d)[3])
-            Vert3d=length(larSimplicialStack(triang3d)[1])
-            Seg3d=length(larSimplicialStack(triang3d)[2])
-            Fac3d=length(larSimplicialStack(triang3d)[3])
-            Cel3d=length(larSimplicialStack(triang3d)[4])
-                @test Vert2d-Seg2d+Fac2d == 1
-                @test Vert3d-Seg3d+Fac3d-Cel3d == 1
-		end
-		
-		@testset "proof" begin
-			@testset "$shape" for shape in [[1,2,3,4],[2,3,4,5,6]]
-				@test length(larSimplicialStack([shape])) == length(shape)
-				@test typeof(larSimplicialStack([shape])) == Array{Array{Array{Int64,1},1},1}
-			end
-		end
-	end	
-	
-	@testset "larCuboidsFacets Tests" begin
-		@test length(larCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
-		@test size(larCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
-	end
-	
-	@testset "gridSkeletons Tests" begin
+@testset "gridSkeletons Tests" begin
         @test length(gridSkeletons([3])[1]) == 4
       	@testset "$shape" for shape in [[1,1,1],[3],[2,3]]
 			@test length(gridSkeletons(shape)) == length(shape)+1
@@ -1453,44 +2203,9 @@ using Base.Test
 			end
 			end
 		end
-	end
-    
-    @testset "Vectorized functions tests" begin	
-	
-	    @testset "vBinaryRange Tests" begin
-		    @test vbinaryRange(1)==["0";"1"]
-		    @test vbinaryRange(2)==["00","01","10","11"]
-		    @test vbinaryRange(3)==["000","001","010","011","100","101","110","111"]
-	    end
+end
 
-	    @testset "vLarImageVerts Tests" "$shape" for shape in [[3,2,1],[3,2],[10,10,10]]
-		    @test size(vlarImageVerts(shape)) == (length(shape),prod(shape + 1))
-	    end
-
-	    @testset "vfilterByOrder Tests" begin
-		    @testset  "$n" for n in 1:4
-			    data = [vfilterByOrder(n)[k] for (k,el) in enumerate(vfilterByOrder(n))]
-			    @test sum(map(length,data)) == 2^n
-		    end
-
-		    @testset "$n,$k" for n in 1:4, k in 0:n
-			    @test length(vfilterByOrder(n)[k+1]) == binomial(n,k)
-		    end 
-	    end
-
-	    @testset "vlarGridSkeleton Tests" begin
-		    @test length(vlarGridSkeleton([1,1,1])(0)) == 8
-		    @test length(vlarGridSkeleton([1,1,1])(1)) == 12
-		    @test length(vlarGridSkeleton([1,1,1])(2)) == 6
-		    @test length(vlarGridSkeleton([1,1,1])(3)) == 1
-	    end
-
-	    @testset "vlarCuboidsFacets Tests" begin
-		    @test length(vlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
-		    @test size(vlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
-	    end
-	
-	    @testset "vgridSkeletons Tests" begin
+@testset "vgridSkeletons Tests" begin
             @test length(vgridSkeletons([3])[1]) == 4
       	    @testset "$shape" for shape in [[1,1,1],[3],[2,3]]
 			    @test length(vgridSkeletons(shape)) == length(shape)+1
@@ -1504,76 +2219,9 @@ using Base.Test
 			    end
 			    end
 		    end
-	    end
-	end
-	
-	@testset "Parallelized functions tests" begin
-	
-    	@testset "plarGrid Tests" begin
-    		@testset "pgrid_0" begin
-    			@test pgrid_0(1) == [0  1]
-    			@test pgrid_0(2) == [0  1  2]
-    			@test pgrid_0(3) == [0  1  2  3]
-    		end
-       
-    		@testset "pgrid_1 Tests" begin
-    			@test repr(pgrid_1(1)) == "[0, 1]"
-    			@test pgrid_1(2) == [0 1; 1 2]
-    			@test pgrid_1(3) == [0 1 2; 1 2 3]
-    		end
-   
-    		@testset "plarGrid" begin
-    			@test repr(plarGrid(1)(0)) == "[0 1]"
-    			@test repr(plarGrid(1)(1)) == "[0, 1]"
-    			@test plarGrid(2)(0) == [0  1  2]
-    			@test plarGrid(2)(1) == [0 1; 1 2]
-    			@test plarGrid(3)(0) == [0  1  2  3]
-    			@test plarGrid(3)(1) == [0  1  2; 1  2  3]
-    		end
-    	end 
+end	
 
-    	@testset "plarGridSkeleton Tests" begin
-    		@test length(plarGridSkeleton([1,1,1])(0)) == 8
-    		@test length(plarGridSkeleton([1,1,1])(1)) == 12
-    		@test length(plarGridSkeleton([1,1,1])(2)) == 6
-    		@test length(plarGridSkeleton([1,1,1])(3)) == 1
-    	end
-
-    	@testset "plarSimplicialStack Tests" begin
-            @testset "euler" begin
-    			triang2d=[[1,2,3],[2,3,4],[3,4,5]]
-                triang3d=[[1,2,3,4],[2,3,4,5],[2,4,5,6],[4,5,6,7],[3,4,5,7],[3,4,7,9],
-                      [3,4,8,9],[1,3,4,8],[1,2,4,6],[1,4,6,8],[4,6,8,9],[4,6,7,9]]
-                Vert2d=length(plarSimplicialStack(triang2d)[1])
-                Seg2d=length(plarSimplicialStack(triang2d)[2])
-                Fac2d=length(plarSimplicialStack(triang2d)[3])
-                Vert3d=length(plarSimplicialStack(triang3d)[1])
-                Seg3d=length(plarSimplicialStack(triang3d)[2])
-                Fac3d=length(plarSimplicialStack(triang3d)[3])
-                Cel3d=length(plarSimplicialStack(triang3d)[4])
-                    @test Vert2d-Seg2d+Fac2d == 1
-                    @test Vert3d-Seg3d+Fac3d-Cel3d == 1
-    		end
-		
-	    	@testset "proof" begin
-		    	@testset "$shape" for shape in [[1,2,3,4],[2,3,4,5,6]]
-			    	@test length(plarSimplicialStack([shape])) == length(shape)
-				    @test typeof(plarSimplicialStack([shape])) ==  Array{Array{Array{Int64,1},1},1}
-			    end
-		    end
-    	end	
-	
-	    @testset "plarCuboidsFacets Tests" begin
-		    @test length(plarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
-    		@test size(plarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
-    	end
-	
-    	@testset "pmlarCuboidsFacets Tests" begin
-    		@test length(pmlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[2]) == 4
-    		@test size(pmlarCuboidsFacets([[0,0] [0,1] [1,1] [1,0]], [[1,2,3,4]])[1],2) == 4 
-    	end
-
-    	@testset "pgridSkeletons Tests" begin
+@testset "pgridSkeletons Tests" begin
             @test length(pgridSkeletons([3])[1]) == 4
           	@testset "$shape" for shape in [[1,1,1],[3],[2,3]]
     			@test length(pgridSkeletons(shape)) == length(shape)+1
@@ -1587,15 +2235,121 @@ using Base.Test
     			end
     			end
     		end
-    	end
-    end
 end
 
 \end{Verbatim}
 \end{list}
 \end{flushleft}
+\subsubsection{Execution time}
+\begin{center}
+\begin{tabular}{|p{16cm}|}
+\hline
+\cellcolor[gray]{.9}Execution time\\
+\hline
+\end{tabular}
+\end{center}
 
-\subsection{Examples}
+\paragraph{Serial}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datas=[Time(N,gridSkeletons,[j,j,j]) for j in range(1,15)]
+
+xs=[1:length(datas);]
+ys=mean.(datas)
+yerrs=std.(datas)/sqrt(N)
+
+plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
+                                                title="gridSkeletons",label=["Serial"],lw=1)
+ \end{Verbatim}
+\end{list}
+\end{flushleft} 
+
+\paragraph{Vectorize}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datav=[Time(N,vgridSkeletons,[j,j,j]) for j in range(1,15)]
+
+xv=[1:length(datav);]
+yv=mean.(datav)
+yerrv=std.(datav)/sqrt(N)
+
+plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
+                                            title="gridSkeletons",label=["Vectorize"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{gridSkeletonsSer.png}
+\includegraphics[scale=0.06]{gridSkeletonsVec.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv]
+y=[ys,yv]
+
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="gridSkeletons",
+                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
+   \end{Verbatim}
+\end{list}
+\end{flushleft}  
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{gridSkeletonsCom1.png}
+\end{figure}
+
+\paragraph{Parallel}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+datap=[Time(N,pgridSkeletons,[j,j,j]) for j in range(1,6)]
+
+xp=[1:length(datap);]
+yp=mean.(datap)
+yerrp=std.(datap)/sqrt(N)
+
+plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
+                                            title="gridSkeletons",label=["Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{gridSkeletonsPar.png}
+\end{figure}
+
+\paragraph{Compare}
+\begin{flushleft}\small
+\begin{list}{}{} \item
+    \begin{Verbatim}[tabsize=4]
+x=[xs,xv,xp]
+y=[ys,yv,yp]
+plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="gridSkeletons",
+                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
+    \end{Verbatim}
+\end{list}
+\end{flushleft}   
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.06]{gridSkeletonsCom.png}
+\end{figure}
+%-----------------------------------------------------------------
+\section{Examples}
+
+
+
+
+
+
 
 To view the cellular compleces, you have to import the following functions:
 
@@ -1929,632 +2683,6 @@ Input: VIEW_NUMBERED(schel2)
 
 %-----------------------------------------------------------------
 %-----------------------------------------------------------------
-
-\section{Execution time}
-Parallel computing is performed on 4 processes in our computer. 
-
-\begin{flushleft}\small
-\begin{list}{}{} \item
-   \begin{Verbatim}[tabsize=4]
-n=4
-addprocs(n)
-
-using Plots
-
-N=10
-   \end{Verbatim}
-\end{list}
-\end{flushleft}
-\vspace{2ex}
-For studying \texttt{execution times} for each function we create this function \texttt{Time}.
-This function takes as input an integer value (the number of loops), function and its arguments, returns an array of all the execution times for each loop. 
-We use the macro $@elapsed$ to computing the execution time than the macro $@time$ that returns allocation memory too.  
-Since at the first call of $@elapsed$ $f(args)$, $f$ must be compiled, the first time we do not consider it, because it will certainly be longer than normal.
-
-\begin{list}{}{} \item
-   \begin{Verbatim}[tabsize=4]
-function Time(N::Int,f::Function,args)
-	timings = Array{Float64}(N)
-	@elapsed f(args)
-	for i in 1:N
-		timings[i] = @elapsed f(args)
-	end
-	return timings
-end
-   \end{Verbatim}
-\end{list}
-\vspace{2ex}
-For each function we compute the time with different input and we study mean and standard error $ e=\frac{std}{\sqrt{N}}$ with Julia methods \texttt{mean()} and \texttt{std()}.
-\\
-\\
-So there are two possibilities.
-
-For large N the time values for each individual input are more precise, since the computer calculates the times with an error. But having to do a lot of loops it is not possible to study for very large inputs, it will take too much time.
-
-For small N it is possible to increase the maximum input passed to the function and to study with less precision larger inputs.
-This study was done with $N = 10$ and changing the inputs if necessary.
-\vspace{2ex}
-\begin{center}
-\begin{tabular}{p{16cm}}
-\hline
-larGrid\\
-\hline
-\end{tabular}
-\end{center}
-\vspace{1ex}
-Let us now prove what we have mentioned before in the parallelization of the larGrid function.
-In this example it is clear that the parallelized loop works very well, because the workers have a job to do.
-\begin{flushleft}\small
-\begin{list}{}{} \item
-   \begin{Verbatim}[tabsize=4]
-Input: s=0; @elapsed for i in 1:200000000
-       s=s+Int(rand(Bool))
-       end
-Output: 23.247962902
-
-Input: @elapsed nheads = @parallel (+) for i = 1:200000000
-           Int(rand(Bool))
-       end
-Output: 1.744299978
-\end{Verbatim}
-\end{list}
-\end{flushleft}
-Comparing the times of the serial version with parallel version of larGrid function, it is easy to notice that the parallelization does not work.
-\vspace{2ex}
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datas=[Time(N,larGrid(j),(1)) for j in [10^2,5*10^2,10^3,5*10^3,10^4,5*10^4,10^5]]
-
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs,
-                        xaxis="Input", title="larGrid",label=["Serial"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft} 
-
-\paragraph{Parallel}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,plarGrid(j),(1)) for j in [10^2,5*10^2,10^3,5*10^3,10^4,5*10^4,10^5]]
-
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp,
-                    xaxis="Input", title="larGrid",label=["Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridSer.png}
-\includegraphics[scale=0.06]{larGridPar.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xp]
-y=[ys,yp]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input",
-                            title="larGrid",label=["Serial" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-\vspace{3ex}
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridCom.png}
-\end{figure}
-
-\vspace{4ex}
-
-\newpage
-\begin{tabular}{p{16cm}}
-\hline
-larCuboidsFacets\\
-\hline
-\end{tabular}
-
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-input=[larCuboids([n,n,n]) for n in [1:20;]]
-
-datas=[Time(N,larCuboidsFacets,(j)) for j in input]
-
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input",
-                                            title="larCuboidsFacets",label=["Serial"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-
-\paragraph{Vectorize}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datav=[Time(N,vlarCuboidsFacets,j) for j in input]
-
-xv=[1:length(datav);]
-yv=mean.(datav)
-yerrv=std.(datav)/sqrt(N)
-
-plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input",   
-                                        title="larCuboidsFacets",label=["Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsFacetsSer.png}
-\includegraphics[scale=0.06]{larCuboidsFacetsVec.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv]
-y=[ys,yv]
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input",
-             title="larCuboidsFacets",label=["Serial" "Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsFacetsCom1.png}
-\end{figure}
-
-The best construct to use in parallelized version seems to be the Julia standard method \texttt{pmap()}.
-\paragraph{Parallel Map}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-
-input=[larCuboids([n,n,n]) for n in [1:6;]]
-
-datapm=[Time(N,pmlarCuboidsFacets,j) for j in input]
-
-xpm=[1:length(datapm);]
-ypm=mean.(datapm)
-yerrpm=std.(datapm)/sqrt(N)
-
-plot(xpm,ypm,yaxis="Time (s)",xlims = (0,length(datapm)+1), yerr = yerrpm, xaxis="Input", 
-                                            title="larCuboidsFacets",label=["Parallel Map"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft} 
-
-\paragraph{Parallel Loop}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,plarCuboidsFacets,j) for j in input]
-
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
-                                        title="larCuboidsFacets",label=["Parallel Loop"],lw=1)
-   \end{Verbatim}
-\end{list}
-\end{flushleft} 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsFacetsParMap.png}
-\includegraphics[scale=0.06]{larCuboidsFacetsPar.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xp, xpm]
-y=[yp,ypm]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larCuboidsFacets",
-                                                        label=["Parallel Loop" "Parallel Map"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsFacetsComPar.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xp]
-y=[ys,yp]
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datas)+1), xaxis="Input", title="larCuboidsFacets",
-                                                                        label=["Serial" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft} 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsFacetsCom.png}
-\end{figure}
-
-\vspace{3ex}
-
-\vspace{3ex}
-
-\begin{tabular}{p{16cm}}
-\hline
-larSimplicialStack\\
-\hline
-\end{tabular}
-
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datas=[Time(N,larSimplicialStack,[[1:j;]]) for j in range(4,15)]
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input",
-                                            title="larSimplicialStack",label=["Serial"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft} 
-
-\paragraph{Parallel}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,plarSimplicialStack,[[1:j;]]) for j in range(4,15)]
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input",
-                                        title="larSimplicialStack",label=["Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larSimplicialStackSer.png}
-\includegraphics[scale=0.06]{larSimplicialStackPar.png}
-\end{figure}
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xp]
-y=[ys,yp]
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input",
-            title="larSimplicialStack",label=["Serial" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larSimplicialStackCom.png}
-\end{figure}
-%--------------------------------------------------------------------------------------------------------------
-\newpage
-\begin{tabular}{p{16cm}}
-\hline
-larGridSkeleton\\
-\hline
-\end{tabular}
-
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datas=[Time(N,larGridSkeleton([j,j,j]),1) for j in range(1,10)]
-
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
-                                            title="larGridSkeleton",label=["Serial"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-
-\paragraph{Vectorize}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datav=[Time(N,vlarGridSkeleton([j,j,j]),1) for j in range(1,10)]
-
-xv=[1:length(datav);]
-yv=mean.(datav)
-yerrv=std.(datav)/sqrt(N)
-
-plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
-                                        title="larGridSkeleton",label=["Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridSkeletonSer.png}
-\includegraphics[scale=0.06]{larGridSkeletonVec.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv]
-y=[ys,yv]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larGridSkeleton",
-                                                                label=["Serial" "Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridSkeletonCom1.png}
-\end{figure}
-
-\paragraph{Parallel}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,plarGridSkeleton([j,j,j]),1) for j in range(1,6)]
-
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
-                                            title="larGridSkeleton",label=["Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridSkeletonPar.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv,xp]
-y=[ys,yv,yp]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datap)+1), xaxis="Input", title="larGridSkeleton",
-                                                        label=["Serial" "Vectorize" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larGridSkeletonCom.png}
-\end{figure}
-%-----------------------------------------------------------------------------------------------------------
-\newpage
-\begin{tabular}{p{16cm}}
-\hline
-larCuboids\\
-\hline
-\end{tabular}
-
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datas=[Time(N,larCuboids,[j,j,j]) for j in range(1,30)]
-
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
-                                                title="larCuboids",label=["Serial"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft} 
-
-\paragraph{Vectorize}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datav=[Time(N,vlarCuboids,[j,j,j]) for j in range(1,30)]
-
-xv=[1:length(datav);]
-yv=mean.(datav)
-yerrv=std.(datav)/sqrt(N)
-
-plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
-                                                title="larCuboids",label=["Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsSer.png}
-\includegraphics[scale=0.06]{larCuboidsVec.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv]
-y=[ys,yv]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="larCuboids",
-                                                label=["Serial" "Vectorize" "Parallel"],lw=1)
-
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsCom1.png}
-\end{figure}
-
-\paragraph{Parallel}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,plarCuboids,[j,j,j]) for j in range(1,6)]
-
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrp, xaxis="Input", 
-                                                title="larCuboids",label=["Parallel"],lw=1)
- \end{Verbatim}
-\end{list}
-\end{flushleft}   
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsPar.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv,xp]
-y=[ys,yv,yp]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="larCuboids",
-                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}  
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{larCuboidsCom.png}
-\end{figure}
-
-\begin{tabular}{p{16cm}}
-\hline
-gridSkeletons\\
-\hline
-\end{tabular}
-
-\paragraph{Serial}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datas=[Time(N,gridSkeletons,[j,j,j]) for j in range(1,15)]
-
-xs=[1:length(datas);]
-ys=mean.(datas)
-yerrs=std.(datas)/sqrt(N)
-
-plot(xs,ys,yaxis="Time (s)",xlims = (0,length(datas)+1), yerr = yerrs, xaxis="Input", 
-                                                title="gridSkeletons",label=["Serial"],lw=1)
- \end{Verbatim}
-\end{list}
-\end{flushleft} 
-
-\paragraph{Vectorize}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datav=[Time(N,vgridSkeletons,[j,j,j]) for j in range(1,15)]
-
-xv=[1:length(datav);]
-yv=mean.(datav)
-yerrv=std.(datav)/sqrt(N)
-
-plot(xv,yv,yaxis="Time (s)",xlims = (0,length(datav)+1), yerr = yerrv, xaxis="Input", 
-                                            title="gridSkeletons",label=["Vectorize"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{gridSkeletonsSer.png}
-\includegraphics[scale=0.06]{gridSkeletonsVec.png}
-\end{figure}
-
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv]
-y=[ys,yv]
-
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="gridSkeletons",
-                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
-   \end{Verbatim}
-\end{list}
-\end{flushleft}  
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{gridSkeletonsCom1.png}
-\end{figure}
-
-\paragraph{Parallel}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-datap=[Time(N,pgridSkeletons,[j,j,j]) for j in range(1,6)]
-
-xp=[1:length(datap);]
-yp=mean.(datap)
-yerrp=std.(datap)/sqrt(N)
-
-plot(xp,yp,yaxis="Time (s)",xlims = (0,length(datap)+1), yerr = yerrp, xaxis="Input", 
-                                            title="gridSkeletons",label=["Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{gridSkeletonsPar.png}
-\end{figure}
-%--------------------------------------------------------------------------------------------------
-\newpage
-\paragraph{Compare}
-\begin{flushleft}\small
-\begin{list}{}{} \item
-    \begin{Verbatim}[tabsize=4]
-x=[xs,xv,xp]
-y=[ys,yv,yp]
-plot(x,y,yaxis="Time (s)",xlims = (0,length(datav)+1), xaxis="Input", title="gridSkeletons",
-                                                    label=["Serial" "Vectorize" "Parallel"],lw=1)
-    \end{Verbatim}
-\end{list}
-\end{flushleft}   
-
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.06]{gridSkeletonsCom.png}
-\end{figure}
 
 \section{Conclusion}
 We can conclude that on 4 processes the parallelized module slows down the execution of functions. 
